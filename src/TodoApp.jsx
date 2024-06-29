@@ -49,6 +49,11 @@ const TodoApp = () => {
     };
 
     const handleCreateTodo = () => {
+        // Check if taskName or description is empty
+        if (!newTodo.taskName.trim() || !newTodo.description.trim()) {
+            alert('Please enter both task name and description.');
+            return;
+        }
         setTodos([...todos, newTodo]);
         setNewTodo({ taskName: '', description: '', status: 'Not completed' });
     };
@@ -84,11 +89,12 @@ const TodoApp = () => {
             ) : (
                 <button className="btn btn-success mb-3" onClick={handleCreateTodo}>Add Todo</button>
             )}
-                <select onChange={(e) => setFilter(e.target.value)} value={filter} className="form-select">
-                    <option value='all'>All</option>
-                    <option value='Not completed'>Not Completed</option>
-                    <option value='Completed'>Completed</option>
-                </select>
+            
+            <select onChange={(e) => setFilter(e.target.value)} value={filter} className="form-select">
+                <option value='all'>All</option>
+                <option value='Not completed'>Not Completed</option>
+                <option value='Completed'>Completed</option>
+            </select>
         
             <div className="row">
                 {filteredTodos.map((todo, index) => (

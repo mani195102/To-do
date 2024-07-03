@@ -6,15 +6,23 @@ const TodoApp = () => {
     const [newTodo, setNewTodo] = useState({ taskName: '', description: '', status: 'Not completed' });
     const [filter, setFilter] = useState('all');
     const [editIndex, setEditIndex] = useState(null);
-    const [openDropdownIndex, setOpenDropdownIndex] = useState(null);
-    const dropdownRef = useRef(null);
+    const [dropdownStates, setDropdownStates] = useState([]); // State to manage open/close status for each dropdown
+
+    const dropdownRefs = useRef([]); // Ref for each dropdown
+
+    // Initialize refs for dropdowns
+    useEffect(() => {
+        dropdownRefs.current = Array(todos.length).fill().map((_, i) => dropdownRefs.current[i] || React.createRef());
+    }, [todos]);
 
     // Close dropdown when clicking outside of it
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setOpenDropdownIndex(null);
-            }
+            dropdownRefs.current.forEach((ref, index) => {
+                if (ref.current && !ref.current.contains(event.target)) {
+                    setDropdownStates(prevStates => prevStates.map((state, i) => i === index ? false : state));
+                }
+            });
         };
 
         document.addEventListener('mousedown', handleClickOutside);
@@ -45,7 +53,7 @@ const TodoApp = () => {
             return todo;
         });
         setTodos(updatedTodos);
-        setOpenDropdownIndex(null); // Close dropdown after updating status
+        setDropdownStates(prevStates => prevStates.map((state, i) => i === index ? false : state)); // Close dropdown after updating status
     };
 
     const handleCreateTodo = () => {
@@ -76,6 +84,14 @@ const TodoApp = () => {
         setTodos(updatedTodos);
     };
 
+    const toggleDropdown = (index) => {
+        setDropdownStates(prevStates => {
+            const newState = [...prevStates];
+            newState[index] = !newState[index];
+            return newState;
+        });
+    };
+
     return (
         <div className='container mt-5'>
             <h2 className="text-center text-black mb-4">Welcome Todo!!!</h2>
@@ -104,12 +120,14 @@ const TodoApp = () => {
                                 <h5 className="title">{todo.taskName}</h5>
                                 <p className="card-text">{todo.description}</p>
                                 <p className="card-text">Status: {todo.status}</p>
-                                <div className="dropdown" ref={dropdownRef}>
-                                    <button className={`btn dropdown-toggle ${todo.status === 'Completed' ? 'btn-success' : 'btn-danger'}`} type="button" onClick={() => setOpenDropdownIndex(openDropdownIndex === index ? null : index)}>
+                                <div className="dropdown" ref={dropdownRefs.current[index]}>
+                                    <button className={`btn dropdown-toggle ${todo.status === 'Completed' ? 'btn-success' : 'btn-danger'}`} type="button" onClick={() => toggleDropdown(index)}>
                                         {todo.status === 'Completed' ? 'Completed' : 'Not Completed'}
                                     </button>
-                                    <ul className={`dropdown-menu ${openDropdownIndex === index ? 'show' : ''}`}>
-                                        <li><button className="dropdown-item" onClick={() => handleUpdateTodoStatus(index, todo.status === 'Completed' ? 'Not completed' : 'Completed')}>{todo.status === 'Completed' ? 'Mark Incomplete' : 'Mark Complete'}</button></li>
+                                    <ul className={`dropdown-menu ${dropdownStates[index] ? 'show' : ''}`}>
+                                        <li><button className="dropdown-item" onClick={() => handleUpdateTodoStatus(index, todo.status === 'Completed' ? 'Not completed' : 'Completed')}>
+                                            {todo.status === 'Completed' ? 'Mark Incomplete' : 'Mark Complete'}
+                                        </button></li>
                                     </ul>
                                 </div>
                                 <button className="btn btn-warning me-2" onClick={() => handleEditTodo(index)}>Edit</button>
